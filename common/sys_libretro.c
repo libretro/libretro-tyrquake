@@ -121,8 +121,6 @@ void Sys_Printf(const char *fmt, ...)
 void Sys_Quit(void)
 {
    Host_Shutdown();
-   if (heap)
-      free(heap);
 }
 
 void Sys_Init(void)
@@ -280,7 +278,6 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
-   Sys_Quit();
 }
 
 unsigned retro_api_version(void)
@@ -779,6 +776,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
 void retro_unload_game(void)
 {
+   Sys_Quit();
 }
 
 unsigned retro_get_region(void)
@@ -842,6 +840,15 @@ cvar_t vid_mode = { "vid_mode", "0", false };
 unsigned short d_8to16table[256];
 
 #define MAKECOLOR(r, g, b) (((r & 0xf8) << 8) | ((g & 0xfc) << 3) | ((b & 0xf8) >> 3))
+
+qboolean
+VID_SetMode(const qvidmode_t *mode, const byte *palette)
+{
+   // FIXME - stub
+   return false;
+}
+
+qboolean VID_CheckAdequateMem(int width, int height) { return true; }
 
 void VID_SetPalette(const byte *palette)
 {
@@ -910,7 +917,7 @@ void VID_Update(vrect_t *rects)
 
 qboolean VID_IsFullScreen(void)
 {
-    return vid_modenum != 0;
+    return true;
 }
 
 void VID_LockBuffer(void)

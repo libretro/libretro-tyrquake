@@ -863,12 +863,14 @@ M_Menu_Video_f(void)
 static void
 M_Video_Draw(void)
 {
-    (*vid_menudrawfn)();
+   if (vid_menudrawfn)
+      (*vid_menudrawfn)();
 }
 
 static void
 M_Video_Key(knum_t keynum)
 {
+   if (vid_menukeyfn)
     (*vid_menukeyfn)(keynum);
 }
 
