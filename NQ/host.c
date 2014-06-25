@@ -271,11 +271,19 @@ void
 Host_WriteConfiguration(void)
 {
     FILE *f;
+#ifdef __LIBRETRO__
+    return;
+#endif
+#ifdef _WIN32
+    const char slash = '\\';
+#else
+    const char slash = '/';
+#endif
 
 // dedicated servers initialize the host but don't parse and set the
 // config.cfg cvars
     if (host_initialized & !isDedicated) {
-	f = fopen(va("%s/config.cfg", com_gamedir), "w");
+	f = fopen(va("%s%cconfig.cfg", com_gamedir, slash), "w");
 	if (!f) {
 	    Con_Printf("Couldn't write config.cfg.\n");
 	    return;

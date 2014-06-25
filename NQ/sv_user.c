@@ -1150,7 +1150,9 @@ static client_command_t client_commands[] = {
     { "kill", SV_Kill_f },
     { "pause", SV_Pause_f },
     { "kick", SV_Kick_f },
+#ifndef __LIBRETRO__
     { "ban", NET_Ban_f },
+#endif
     { "prespawn", SV_PreSpawn_f },
     { "spawn", SV_Spawn_f },
     { "begin", SV_Begin_f },

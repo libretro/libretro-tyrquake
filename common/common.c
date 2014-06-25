@@ -1496,8 +1496,13 @@ COM_WriteFile(const char *filename, const void *data, int len)
 {
     FILE *f;
     char name[MAX_OSPATH];
+#ifdef _WIN32
+    const char slash = '\\';
+#else
+    const char slash = '/';
+#endif
 
-    snprintf(name, sizeof(name), "%s/%s", com_gamedir, filename);
+    snprintf(name, sizeof(name), "%s%c%s", com_gamedir, slash, filename);
 
     f = fopen(name, "wb");
     if (!f) {
@@ -1521,6 +1526,11 @@ COM_CreatePath(const char *path)
 {
     char part[MAX_OSPATH];
     char *ofs;
+#ifdef _WIN32
+    const char slash = '\\';
+#else
+    const char slash = '/';
+#endif
 
     if (!path || !path[0])
 	return;
@@ -1529,10 +1539,10 @@ COM_CreatePath(const char *path)
     part[MAX_OSPATH - 1] = 0;
 
     for (ofs = part + 1; *ofs; ofs++) {
-	if (*ofs == '/') {	// create the directory
+	if (*ofs == slash) {	// create the directory
 	    *ofs = 0;
 	    Sys_mkdir(part);
-	    *ofs = '/';
+	    *ofs = slash;
 	}
     }
 }
@@ -1917,11 +1927,16 @@ COM_AddGameDirectory(const char *base, const char *dir)
     searchpath_t *search;
     pack_t *pak;
     char pakfile[MAX_OSPATH];
+#ifdef _WIN32
+    const char slash = '\\';
+#else
+    const char slash = '/';
+#endif
 
     if (!base)
 	return;
 
-    strcpy(com_gamedir, va("%s/%s", base, dir));
+    strcpy(com_gamedir, va("%s%c%s", base, slash, dir));
 #ifdef QW_HACK
     {
 	char *p;
@@ -1942,10 +1957,20 @@ COM_AddGameDirectory(const char *base, const char *dir)
 // add any pak files in the format pak0.pak pak1.pak, ...
 //
     for (i = 0;; i++) {
-	snprintf(pakfile, sizeof(pakfile), "%s/pak%i.pak", com_gamedir, i);
+	snprintf(pakfile, sizeof(pakfile), "%s%cpak%i.pak", com_gamedir, slash, i);
+   Sys_Printf("pakfile is:\n");
+   Sys_Printf(pakfile);
+   Sys_Printf("\n");
 	pak = COM_LoadPackFile(pakfile);
 	if (!pak)
-	    break;
+   {
+      //try uppercase
+      snprintf(pakfile, sizeof(pakfile), "%s%cPAK%i.PAK", com_gamedir, slash, i);
+      pak = COM_LoadPackFile(pakfile);
+
+      if (!pak) // that doesn't work either? then break
+         break;
+   }
 	search = Hunk_Alloc(sizeof(searchpath_t));
 	search->pack = pak;
 	search->next = com_searchpaths;
@@ -1970,6 +1995,11 @@ COM_Gamedir(const char *dir)
     int i;
     pack_t *pak;
     char pakfile[MAX_OSPATH];
+#ifdef _WIN32
+    const char slash = '\\';
+#else
+    const char slash = '/';
+#endif
 
     if (strstr(dir, "..") || strstr(dir, "/")
 	|| strstr(dir, "\\") || strstr(dir, ":")) {
@@ -2002,7 +2032,7 @@ COM_Gamedir(const char *dir)
     if (!strcmp(dir, "id1") || !strcmp(dir, "qw"))
 	return;
 
-    snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", com_basedir, dir);
+    snprintf(com_gamedir, sizeof(com_gamedir), "%s%c%s", com_basedir, slash, dir);
 
     //
     // add the directory to the search path
@@ -2016,7 +2046,7 @@ COM_Gamedir(const char *dir)
     // add any pak files in the format pak0.pak pak1.pak, ...
     //
     for (i = 0;; i++) {
-	snprintf(pakfile, sizeof(pakfile), "%s/pak%i.pak", com_gamedir, i);
+	snprintf(pakfile, sizeof(pakfile), "%s%cpak%i.pak", com_gamedir, slash, i);
 	pak = COM_LoadPackFile(pakfile);
 	if (!pak)
 	    break;
@@ -2049,15 +2079,20 @@ COM_InitFilesystem(void)
 // Overrides the system supplied base directory (under id1)
 //
     i = COM_CheckParm("-basedir");
+
+#ifdef __LIBRETRO__
+	strcpy(com_basedir, host_parms.basedir);
+    COM_AddGameDirectory(com_basedir, "");
+#else
     if (i && i < com_argc - 1)
 	strcpy(com_basedir, com_argv[i + 1]);
     else
 	strcpy(com_basedir, host_parms.basedir);
-
 //
 // start up with id1 by default
 //
     COM_AddGameDirectory(com_basedir, "id1");
+#endif
     COM_AddGameDirectory(home, ".tyrquake/id1");
 
 #ifdef NQ_HACK
