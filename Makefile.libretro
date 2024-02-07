@@ -143,7 +143,10 @@ else
    CC = gcc
    fpic :=
    LD_FLAGS :=
-   SHARED := -shared -static-libgcc -static-libstdc++ -s
+   SHARED := -shared -static-libgcc -static-libstdc++
+ifneq ($(DEBUG), 1)
+   SHARED += -s
+endif  
    CFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
    WINSOCKS := -lws2_32
 endif
